@@ -1,23 +1,38 @@
-import logo from './logo.svg';
+import React, { useState } from 'react';
 import './App.css';
+import SearchBar from './components/SearchBar';
+import RepoList from './components/RepoList';
 
 function App() {
+  const [username, setUsername] = useState('');
+  const [repos, setRepos] = useState([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const fetchRepos = async () => {
+    if (!username) return;
+
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`https://api.github.com/users/${username}/repos`);
+      if (!res.ok) throw new Error('User not found');
+      const data = await res.json();
+      setRepos(data);
+    } catch (err) {
+      setError(err.message);
+      setRepos([]);
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <h1>GitHub Repo Explorer</h1>
+      <SearchBar username={username} setUsername={setUsername} onSearch={fetchRepos} />
+      {loading && <p>Loading...</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <RepoList repos={repos} />
     </div>
   );
 }
